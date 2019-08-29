@@ -22,5 +22,13 @@
         "bigbit/di-bootstrap": "^1.0.0",
 
         "php": "^7.2.0"
+    },
+
+    "require-dev": {
+        "phpstan/phpstan": "^0.11.15"
+    },
+
+    "scripts": {
+        "stan": "phpstan analyse --level 7 -c phpstan.neon src"
     }
 }
