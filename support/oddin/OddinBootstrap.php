@@ -1,5 +1,5 @@
 <?php
-namespace BigBIT\Oddin\Support\oddin;
+namespace BigBIT\SmartDI\Support\oddin;
 
 use BigBIT\DIBootstrap\Bootstrap;
 use BigBIT\DIBootstrap\Exceptions\ClassNotFoundException;

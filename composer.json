@@ -18,7 +18,8 @@
 
     "autoload": {
         "psr-4": {
-            "BigBIT\\SmartDI\\": "src/"
+            "BigBIT\\SmartDI\\": "src/",
+            "BigBIT\\SmartDI\\Support": "support/"
         }
     },
 

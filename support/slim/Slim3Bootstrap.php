@@ -1,5 +1,5 @@
 <?php
-namespace BigBIT\Oddin\Support\slim;
+namespace BigBIT\SmartDI\Support\slim;
 
 use BigBIT\DIBootstrap\Bootstrap;
 use Slim\DefaultServicesProvider;
