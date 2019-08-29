@@ -33,6 +33,10 @@
         "phpstan/phpstan": "^0.11.15"
     },
 
+    "suggest": {
+        "bigbit/smart-di": "~1.0.0"
+    },
+
     "scripts": {
         "stan": "phpstan analyse --level 7 -c phpstan.neon src"
     }
