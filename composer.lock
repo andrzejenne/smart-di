@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "75cfcfd3197afa1def21fc72029024d4",
+    "content-hash": "267118fac309525b6d274e06483e3da0",
     "packages": [
         {
             "name": "bigbit/di-bootstrap",
-            "version": "v1.0.1",
+            "version": "v1.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andrzejenne/di-bootstrap.git",
-                "reference": "8cbeca5667524f81e3c6500c9ad4eb355adab57a"
+                "reference": "4dd80bd0c08005481483f85dcc758160b73cf30c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andrzejenne/di-bootstrap/zipball/8cbeca5667524f81e3c6500c9ad4eb355adab57a",
-                "reference": "8cbeca5667524f81e3c6500c9ad4eb355adab57a",
+                "url": "https://api.github.com/repos/andrzejenne/di-bootstrap/zipball/4dd80bd0c08005481483f85dcc758160b73cf30c",
+                "reference": "4dd80bd0c08005481483f85dcc758160b73cf30c",
                 "shasum": ""
             },
             "require": {
@@ -48,7 +48,7 @@
                 }
             ],
             "description": "App DI Container bootstrapping",
-            "time": "2019-08-29T10:27:14+00:00"
+            "time": "2019-08-29T10:59:01+00:00"
         },
         {
             "name": "psr/container",
