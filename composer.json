@@ -1,0 +1,26 @@
+{
+    "name": "bigbit/smart-di",
+    "description": "SmartContainer evolved from ODDIN ExampleContainer",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Andrzej Heczko",
+            "email": "andrzej.heczko@gmail.com"
+        }
+    ],
+
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {
+            "BigBIT\\SmartDI\\": "src/"
+        }
+    },
+
+    "require": {
+        "psr/container": "^1.0",
+        "bigbit/di-bootstrap": "^1.0.0",
+
+        "php": "^7.2.0"
+    }
+}
