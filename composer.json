@@ -11,6 +11,11 @@
     ],
 
     "minimum-stability": "stable",
+
+    "provide": {
+        "psr/container": "~1.0.0"
+    },
+
     "autoload": {
         "psr-4": {
             "BigBIT\\SmartDI\\": "src/"
