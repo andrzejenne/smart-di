@@ -34,7 +34,7 @@
     },
 
     "suggest": {
-        "bigbit/smart-di": "~1.0.0"
+        "bigbit/oddin": "~1.0.0"
     },
 
     "scripts": {
