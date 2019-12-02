@@ -18,10 +18,10 @@ class SmartContainer implements ContainerInterface, \ArrayAccess
 {
 
     /** @var array */
-    private $definitions = [];
+    private array $definitions = [];
 
     /** @var array */
-    private $instances = [];
+    private array $instances = [];
 
     /**
      * @param string $id

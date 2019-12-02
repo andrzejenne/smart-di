@@ -24,9 +24,9 @@
 
     "require": {
         "psr/container": "^1.0",
-        "bigbit/di-bootstrap": "^1.0.0",
+        "bigbit/di-bootstrap": "^2.0.0",
 
-        "php": "^7.2.0"
+        "php": "^7.4.0"
     },
 
     "require-dev": {
@@ -34,7 +34,7 @@
     },
 
     "suggest": {
-        "bigbit/oddin": "~1.0.0"
+        "bigbit/oddin": "~2.0.0"
     },
 
     "scripts": {
