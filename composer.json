@@ -30,6 +30,7 @@
     },
 
     "require-dev": {
+        "phpunit/phpunit": "^8.2",
         "phpstan/phpstan": "^0.11.15"
     },
 
@@ -38,6 +39,7 @@
     },
 
     "scripts": {
+        "test": "phpunit --configuration phpunit.xml",
         "stan": "phpstan analyse --level 7 -c phpstan.neon src"
     }
 }
