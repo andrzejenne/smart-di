@@ -1,5 +1,6 @@
 <?php
 
+use BigBIT\example\ExtClass;
 use BigBIT\SmartDI\SmartContainer;
 
 /**
@@ -39,5 +40,12 @@ class ContainerTest extends TestCase
         $this->assertInstanceOf(ExampleClass::class, $container->get(ExampleClass::class));
         $this->assertInstanceOf(AutowireClass::class, ($autowired = $container->get(AutowireClass::class)));
         $this->assertInstanceOf(ExampleClass::class, $autowired->example);
+
+        try {
+            $this->assertTrue($container->has(ExtClass::class));
+        }
+        catch (\Throwable $t) {
+            $this->fail("Class not found");
+        }
     }
 }
