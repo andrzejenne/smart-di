@@ -5,7 +5,6 @@ namespace BigBIT\SmartDI;
 use BigBIT\SmartDI\Exceptions\CannotResolveException;
 use BigBIT\SmartDI\Exceptions\ClassNotFoundException;
 use BigBIT\SmartDI\Exceptions\DefinitionNotFoundException;
-use Composer\Autoload\ClassLoader;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -21,21 +20,6 @@ class SmartContainer implements ContainerInterface, \ArrayAccess
 
     /** @var array */
     private array $instances = [];
-
-    /** @var ClassLoader|null */
-    private ?ClassLoader $loader;
-
-    /**
-     * SmartContainer constructor.
-     * @param ClassLoader|null $loader
-     */
-    public function __construct(?ClassLoader $loader = null)
-    {
-        if ($loader) {
-            $this->loader = $loader;
-        }
-    }
-
 
     /**
      * @param string $id
@@ -144,10 +128,6 @@ class SmartContainer implements ContainerInterface, \ArrayAccess
      */
     private function tryAutoWire(string $id)
     {
-        if (!class_exists($id) && $this->loader) {
-            $this->loader->loadClass($id);
-        }
-
         if (class_exists($id)) {
             $this[$id] = function () use ($id) {
                 $dependencies = $this->getDependenciesFor($id);
