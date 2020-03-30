@@ -21,6 +21,9 @@ class SmartContainer implements ContainerInterface, \ArrayAccess
     /** @var array */
     private array $instances = [];
 
+    /** @var array */
+    private array $primitives = [];
+
     /**
      * @param string $id
      * @return mixed
@@ -67,10 +70,29 @@ class SmartContainer implements ContainerInterface, \ArrayAccess
      * @param string $id
      * @param mixed $instance
      */
-    public function bind($id, $instance)
+    public function bind(string $id, $instance)
     {
         $this->instances[$id] = $instance;
         $this->definitions[$id] = true;
+    }
+
+    /**
+     * @param string $cls
+     * @param string $name
+     * @param mixed $value
+     * @return SmartContainer
+     */
+    public function setPrimitive(string $cls, string $name, $value)
+    {
+        if (!isset($this->primitives[$cls])) {
+            $this->primitives[$cls] = [];
+        }
+
+        if (!isset($this->primitives[$cls][$name])) {
+            $this->primitives[$cls][$name] = $value;
+        }
+
+        return $this;
     }
 
     /**
@@ -161,32 +183,55 @@ class SmartContainer implements ContainerInterface, \ArrayAccess
         $dependencies = [];
 
         foreach ($parameters as $parameter) {
-            $type = $parameter->getType();
-            if (!$type) {
-                throw new \Exception("Parameter " . $parameter->getName() . " has no type specified, cannot auto wire");
-            } else {
-                if ($type->allowsNull()) {
-                    $dependencies[] = null;
-                } else {
-                    $typeName = $type->getName();
 
-                    if ($typeName) {
-                        if ($type->isBuiltin()) {
-                            throw new \Exception("Cannot auto wire builtin type " . $type->getName() . " in $id");
-                        } else {
-                            if ($this->has($typeName)) {
-                                $dependencies[] = $this->get($typeName);
-                            } else {
-                                throw new \Exception("Cannot auto wire unknown type $typeName for $id");
-                            }
-                        }
-                    } else {
-                        throw new \Exception("Cannot continue, no type name specified for $id");
+            $dependency = null;
+
+            $type = $parameter->getType();
+            $argName = $parameter->getName();
+
+            if ($type instanceof \ReflectionNamedType) {
+                $typeName = $type->getName();
+                if ($type->isBuiltin()) {
+                    $dependency = $this->getPrimitiveDependency($id, $argName);
+
+                    $dependencyType = gettype($dependency);
+                    if ($dependencyType !== $typeName) {
+                        throw new \Exception("Invalid dependency type `$dependencyType` for `$id` in `$argName`. It should be `$typeName`.");
+                    }
+                } else {
+                    if ($this->has($typeName)) {
+                        $dependency = $this->get($typeName);
                     }
                 }
+            } else {
+                $dependency = $this->getPrimitiveDependency($id, $argName);
             }
+
+            if ($dependency === null && !$type->allowsNull()) {
+                throw new \Exception("Dependency `$argName` for `$id` not found.");
+            }
+
+            $dependencies[] = $dependency;
         }
 
         return $dependencies;
+    }
+
+    /**
+     * @param string $id
+     * @param string $name
+     * @return mixed|null
+     */
+    private function getPrimitiveDependency(string $id, string $name)
+    {
+        $dependency = null;
+        if (isset($this->primitives[$id][$name])) {
+            $dependency = $this->primitives[$id][$name];
+            if (is_callable($dependency)) {
+                $dependency = $dependency($this);
+            }
+        }
+
+        return $dependency;
     }
 }
