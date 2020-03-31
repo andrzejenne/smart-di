@@ -2,6 +2,7 @@
 
 namespace BigBIT\SmartDI;
 
+use BigBIT\DIMeta\DIMetaResolver;
 use BigBIT\SmartDI\Exceptions\CannotRedefineException;
 use BigBIT\SmartDI\Exceptions\CannotResolveException;
 use BigBIT\SmartDI\Exceptions\ClassNotFoundException;
@@ -9,6 +10,7 @@ use BigBIT\SmartDI\Exceptions\DefinitionNotFoundException;
 use BigBIT\SmartDI\Exceptions\DependencyException;
 use BigBIT\SmartDI\Interfaces\DependencyResolverInterface;
 use BigBIT\SmartDI\Interfaces\SmartContainerInterface;
+use Psr\SimpleCache\CacheInterface;
 
 /**
  * Class SmartContainer
@@ -25,11 +27,16 @@ class SmartContainer implements SmartContainerInterface, \ArrayAccess
     }
 
     /**
+     * @param CacheInterface $cache
      * @return SmartContainerInterface
      */
-    public static function createDefault()
+    public static function createDefault(CacheInterface $cache)
     {
-        return static::create(new DependencyResolver());
+        return static::create(
+            new DependencyResolver(
+                new DIMetaResolver($cache)
+            )
+        );
     }
 
     /** @var array */

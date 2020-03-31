@@ -3,7 +3,7 @@
 
 namespace BigBIT\SmartDI;
 
-
+use BigBIT\DIMeta\DIMetaResolver;
 use BigBIT\SmartDI\Exceptions\DefinitionNotFoundException;
 use BigBIT\SmartDI\Exceptions\DependencyException;
 use BigBIT\SmartDI\Interfaces\DependencyResolverInterface;
@@ -15,6 +15,14 @@ use BigBIT\SmartDI\Interfaces\SmartContainerInterface;
  */
 class DependencyResolver implements DependencyResolverInterface
 {
+    /** @var DIMetaResolver */
+    private DIMetaResolver $metaResolver;
+
+    public function __construct(DIMetaResolver $metaResolver)
+    {
+        $this->metaResolver = $metaResolver;
+    }
+
     /**
      * @param string $id
      * @param SmartContainerInterface $container
@@ -25,45 +33,31 @@ class DependencyResolver implements DependencyResolverInterface
      * @todo make di-chache reflection dependencies cache
      */
     public function getDependenciesFor(string $id, SmartContainerInterface $container) {
-        $reflection = new \ReflectionClass($id);
-
-        $constructor = $reflection->getConstructor();
-
-        if (!$constructor) {
-            return [];
-        }
-
-        $parameters = $constructor->getParameters();
+        $meta = $this->metaResolver->getClassMeta($id);
 
         $dependencies = [];
 
-        foreach ($parameters as $parameter) {
+        foreach ($meta as $arg) {
 
             $dependency = null;
 
-            $type = $parameter->getType();
-            $argName = $parameter->getName();
+            if ($arg->isBuiltin) {
+                $dependency = $container->getPrimitive($id, $arg->name);
 
-            if ($type instanceof \ReflectionNamedType) {
-                $typeName = $type->getName();
-                if ($type->isBuiltin()) {
-                    $dependency = $container->getPrimitive($id, $argName);
-
+                if ($arg->type) {
                     $dependencyType = gettype($dependency);
-                    if ($dependencyType !== $typeName) {
-                        throw new DependencyException("Invalid dependency type `$dependencyType` for `$id` in `$argName`. It should be `$typeName`.");
-                    }
-                } else {
-                    if ($container->has($typeName)) {
-                        $dependency = $container->get($typeName);
+                    if ($dependencyType !== $arg->type) {
+                        throw new DependencyException("Invalid dependency type `$dependencyType` for `$id` in `{$arg->name}`. It should be `{$arg->type}`.");
                     }
                 }
             } else {
-                $dependency = $container->getPrimitive($id, $argName);
+                if ($container->has($arg->type)) {
+                    $dependency = $container->get($arg->type);
+                }
             }
 
-            if ($dependency === null && !$type->allowsNull()) {
-                throw new DefinitionNotFoundException($id, $argName);
+            if ($dependency === null && !$arg->allowsNull) {
+                throw new DefinitionNotFoundException($id, $arg->name);
             }
 
             $dependencies[] = $dependency;

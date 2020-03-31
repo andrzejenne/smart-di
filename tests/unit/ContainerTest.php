@@ -2,6 +2,7 @@
 
 use BigBIT\example\ExtClass;
 use BigBIT\SmartDI\SmartContainer;
+use Symfony\Component\Cache\Simple\ArrayCache;
 
 /**
  * Class ExampleClass
@@ -45,8 +46,14 @@ class PrimitiveClass {
  */
 class ContainerTest extends TestCase
 {
-    public function testGetInstance() {
-        $container = SmartContainer::createDefault();
+    private function createSimpleCache()
+    {
+        return new ArrayCache();
+    }
+
+    public function testGetInstance() 
+    {
+        $container = SmartContainer::createDefault($this->createSimpleCache());
         $container['value'] = 1;
 
         $this->assertEquals(1, $container->get('value'), 'container gets value');
@@ -67,7 +74,7 @@ class ContainerTest extends TestCase
      */
     public function testPrimitiveAutoWire()
     {
-        $container = SmartContainer::createDefault();
+        $container = SmartContainer::createDefault($this->createSimpleCache());
         $container->definePrimitive(PrimitiveClass::class, 'typedPrimitive', 'test')
             ->definePrimitive(PrimitiveClass::class, 'mixedPrimitive', 1.1);
 
@@ -77,7 +84,7 @@ class ContainerTest extends TestCase
         $this->assertEquals('test', $instance->typedPrimitive);
         $this->assertEquals(1.1, $instance->mixedPrimitive);
 
-        $container = SmartContainer::createDefault();
+        $container = SmartContainer::createDefault($this->createSimpleCache());
         $container->definePrimitive(PrimitiveClass::class, 'typedPrimitive', function(){ return 'test'; })
             ->definePrimitive(PrimitiveClass::class, 'mixedPrimitive', 1.1);
 
@@ -88,7 +95,7 @@ class ContainerTest extends TestCase
         $this->assertEquals(1.1, $instance->mixedPrimitive);
 
         // Throwing exceptions
-        $exCon = SmartContainer::createDefault();
+        $exCon = SmartContainer::createDefault($this->createSimpleCache());
 
         $exCon->definePrimitive(PrimitiveClass::class, 'typedPrimitive', 5.5)
             ->definePrimitive(PrimitiveClass::class, 'mixedPrimitive', new stdClass());
@@ -102,7 +109,7 @@ class ContainerTest extends TestCase
 
         $this->assertEquals("Invalid dependency type `double` for `PrimitiveClass` in `typedPrimitive`. It should be `string`.", $tMessage);
 
-        $exCon = SmartContainer::createDefault();
+        $exCon = SmartContainer::createDefault($this->createSimpleCache());
         $exCon->definePrimitive(PrimitiveClass::class, 'typedPrimitive', function(){ return 5.5; })
             ->definePrimitive(PrimitiveClass::class, 'mixedPrimitive', new stdClass());
 
