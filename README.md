@@ -5,12 +5,12 @@ Dependencies for php7.4
 # Adding primitive dependencies
 examples
 ```php
-use BigBIT\SmartDI\SmartContainer;
+use BigBIT\SmartDI\Interfaces\SmartContainerInterface;
 use Psr\Container\ContainerInterface;
 
-/** @var SmartContainer $container */
-$container->setPrimitive(SomeClass::class, 'constructorPropertyName', 'someValue');
-$container->setPrimitive(SomeClass::class, 'constructorPropertyName', 
+/** @var SmartContainerInterface $container */
+$container->definePrimitive(SomeClass::class, 'constructorPropertyName', 'someValue');
+$container->definePrimitive(SomeClass::class, 'constructorPropertyName', 
     function(ContainerInterface $container) { 
         return 'someValue'; 
     }
