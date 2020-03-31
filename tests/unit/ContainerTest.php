@@ -45,12 +45,8 @@ class PrimitiveClass {
  */
 class ContainerTest extends TestCase
 {
-    /**
-     * @throws \BigBIT\SmartDI\Exceptions\CannotResolveException
-     * @throws \BigBIT\SmartDI\Exceptions\DefinitionNotFoundException
-     */
     public function testGetInstance() {
-        $container = new SmartContainer();
+        $container = SmartContainer::createDefault();
         $container['value'] = 1;
 
         $this->assertEquals(1, $container->get('value'), 'container gets value');
@@ -67,14 +63,13 @@ class ContainerTest extends TestCase
     }
 
     /**
-     * @throws \BigBIT\SmartDI\Exceptions\CannotResolveException
-     * @throws \BigBIT\SmartDI\Exceptions\DefinitionNotFoundException
+     * @throws \BigBIT\SmartDI\Exceptions\CannotRedefineException
      */
     public function testPrimitiveAutoWire()
     {
-        $container = new SmartContainer();
-        $container->setPrimitive(PrimitiveClass::class, 'typedPrimitive', 'test')
-            ->setPrimitive(PrimitiveClass::class, 'mixedPrimitive', 1.1);
+        $container = SmartContainer::createDefault();
+        $container->definePrimitive(PrimitiveClass::class, 'typedPrimitive', 'test')
+            ->definePrimitive(PrimitiveClass::class, 'mixedPrimitive', 1.1);
 
         /** @var PrimitiveClass $instance */
         $instance = $container->get(PrimitiveClass::class);
@@ -82,9 +77,9 @@ class ContainerTest extends TestCase
         $this->assertEquals('test', $instance->typedPrimitive);
         $this->assertEquals(1.1, $instance->mixedPrimitive);
 
-        $container = new SmartContainer();
-        $container->setPrimitive(PrimitiveClass::class, 'typedPrimitive', function(){ return 'test'; })
-            ->setPrimitive(PrimitiveClass::class, 'mixedPrimitive', 1.1);
+        $container = SmartContainer::createDefault();
+        $container->definePrimitive(PrimitiveClass::class, 'typedPrimitive', function(){ return 'test'; })
+            ->definePrimitive(PrimitiveClass::class, 'mixedPrimitive', 1.1);
 
         /** @var PrimitiveClass $instance */
         $instance = $container->get(PrimitiveClass::class);
@@ -93,28 +88,29 @@ class ContainerTest extends TestCase
         $this->assertEquals(1.1, $instance->mixedPrimitive);
 
         // Throwing exceptions
-        $exCon = new SmartContainer();
+        $exCon = SmartContainer::createDefault();
 
-        $exCon->setPrimitive(PrimitiveClass::class, 'typedPrimitive', 5.5)
-            ->setPrimitive(PrimitiveClass::class, 'mixedPrimitive', new stdClass());
+        $exCon->definePrimitive(PrimitiveClass::class, 'typedPrimitive', 5.5)
+            ->definePrimitive(PrimitiveClass::class, 'mixedPrimitive', new stdClass());
 
         $tMessage = null;
         try {
             $exCon->get(PrimitiveClass::class);
         } catch (\Throwable $t) {
-            $tMessage = $t->getPrevious()->getMessage();
+            $tMessage = $t->getPrevious()->getPrevious()->getMessage();
         }
 
         $this->assertEquals("Invalid dependency type `double` for `PrimitiveClass` in `typedPrimitive`. It should be `string`.", $tMessage);
 
-        $exCon->setPrimitive(PrimitiveClass::class, 'typedPrimitive', function(){ return 5.5; })
-            ->setPrimitive(PrimitiveClass::class, 'mixedPrimitive', new stdClass());
+        $exCon = SmartContainer::createDefault();
+        $exCon->definePrimitive(PrimitiveClass::class, 'typedPrimitive', function(){ return 5.5; })
+            ->definePrimitive(PrimitiveClass::class, 'mixedPrimitive', new stdClass());
 
         $tMessage = null;
         try {
             $exCon->get(PrimitiveClass::class);
         } catch (\Throwable $t) {
-            $tMessage = $t->getPrevious()->getMessage();
+            $tMessage = $t->getPrevious()->getPrevious()->getMessage();
         }
 
         $this->assertEquals("Invalid dependency type `double` for `PrimitiveClass` in `typedPrimitive`. It should be `string`.", $tMessage);

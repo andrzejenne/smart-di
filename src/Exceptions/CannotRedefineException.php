@@ -11,7 +11,7 @@ use Throwable;
  * Class CannotResolveException
  * @package BigBIT\SmartDI\Exceptions
  */
-class CannotResolveException extends \Exception implements ContainerExceptionInterface
+class CannotRedefineException extends \Exception implements ContainerExceptionInterface
 {
     /**
      * CannotResolveException constructor.
@@ -21,7 +21,7 @@ class CannotResolveException extends \Exception implements ContainerExceptionInt
      */
     public function __construct(string $id, $code = 0, Throwable $previous = null)
     {
-        parent::__construct(sprintf("Cannot resolve dependency for `%s`", $id), $code, $previous);
+        parent::__construct(sprintf("Cannot redefine dependency for `%s`", $id), $code, $previous);
     }
 
 }

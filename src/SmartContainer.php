@@ -2,34 +2,65 @@
 
 namespace BigBIT\SmartDI;
 
+use BigBIT\SmartDI\Exceptions\CannotRedefineException;
 use BigBIT\SmartDI\Exceptions\CannotResolveException;
 use BigBIT\SmartDI\Exceptions\ClassNotFoundException;
 use BigBIT\SmartDI\Exceptions\DefinitionNotFoundException;
-use Psr\Container\ContainerInterface;
+use BigBIT\SmartDI\Exceptions\DependencyException;
+use BigBIT\SmartDI\Interfaces\DependencyResolverInterface;
+use BigBIT\SmartDI\Interfaces\SmartContainerInterface;
 
 /**
  * Class SmartContainer
  * @package BigBIT\SmartDI\Examples
- * @todo - create dedicated exceptions
  */
-class SmartContainer implements ContainerInterface, \ArrayAccess
+class SmartContainer implements SmartContainerInterface, \ArrayAccess
 {
+    /**
+     * @param DependencyResolverInterface $dependencyResolver
+     * @return SmartContainerInterface
+     */
+    public static function create(DependencyResolverInterface $dependencyResolver) {
+        return new static($dependencyResolver);
+    }
 
-    /** @var array */
-    private array $definitions = [];
+    /**
+     * @return SmartContainerInterface
+     */
+    public static function createDefault()
+    {
+        return static::create(new DependencyResolver());
+    }
 
     /** @var array */
     private array $instances = [];
 
     /** @var array */
+    private array $definitions = [];
+
+    /** @var array */
     private array $primitives = [];
+
+    /** @var DependencyResolverInterface|null */
+    private ?DependencyResolverInterface $dependencyResolver;
+
+    /**
+     * SmartContainer constructor.
+     * @param DependencyResolverInterface $dependencyResolver
+     */
+    public function __construct(DependencyResolverInterface $dependencyResolver)
+    {
+        $this->dependencyResolver = $dependencyResolver;
+    }
+
 
     /**
      * @param string $id
      * @return mixed
-     * @throws DefinitionNotFoundException
      * @throws CannotResolveException
-     * @throws \Exception
+     * @throws ClassNotFoundException
+     * @throws DefinitionNotFoundException
+     * @throws CannotRedefineException
      */
     public function get($id)
     {
@@ -55,7 +86,8 @@ class SmartContainer implements ContainerInterface, \ArrayAccess
     /**
      * @param string $id
      * @return bool
-     * @throws \Exception
+     * @throws CannotRedefineException
+     * @throws ClassNotFoundException
      */
     public function has($id)
     {
@@ -69,30 +101,70 @@ class SmartContainer implements ContainerInterface, \ArrayAccess
     /**
      * @param string $id
      * @param mixed $instance
+     * @return SmartContainerInterface
      */
     public function bind(string $id, $instance)
     {
         $this->instances[$id] = $instance;
-        $this->definitions[$id] = true;
+
+        return $this;
     }
 
     /**
-     * @param string $cls
-     * @param string $name
-     * @param mixed $value
-     * @return SmartContainer
+     * @param string $id
+     * @param callable $as
+     * @return SmartContainerInterface
+     * @throws CannotRedefineException
      */
-    public function setPrimitive(string $cls, string $name, $value)
+    public function define(string $id, callable $as)
     {
-        if (!isset($this->primitives[$cls])) {
-            $this->primitives[$cls] = [];
+        if(isset($this->definitions[$id])) {
+            throw new CannotRedefineException($id);
         }
 
-        if (!isset($this->primitives[$cls][$name])) {
-            $this->primitives[$cls][$name] = $value;
-        }
+        $this->definitions[$id] = $as;
 
         return $this;
+    }
+
+    /**
+     * @param string $id
+     * @param string $name
+     * @param mixed $value
+     * @return SmartContainerInterface
+     * @throws CannotRedefineException
+     */
+    public function definePrimitive(string $id, string $name, $value)
+    {
+        if (!isset($this->primitives[$id])) {
+            $this->primitives[$id] = [];
+        }
+
+        if (isset($this->primitives[$id][$name])) {
+            throw new CannotRedefineException($id);
+        }
+
+        $this->primitives[$id][$name] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param string $id
+     * @param string $name
+     * @return mixed|null
+     */
+    public function getPrimitive(string $id, string $name)
+    {
+        $dependency = null;
+        if (isset($this->primitives[$id][$name])) {
+            $dependency = $this->primitives[$id][$name];
+            if (is_callable($dependency)) {
+                $dependency = $dependency($this);
+            }
+        }
+
+        return $dependency;
     }
 
     /**
@@ -109,7 +181,9 @@ class SmartContainer implements ContainerInterface, \ArrayAccess
      * @param mixed $offset
      * @return mixed
      * @throws CannotResolveException
+     * @throws ClassNotFoundException
      * @throws DefinitionNotFoundException
+     * @throws CannotRedefineException
      */
     public function offsetGet($offset)
     {
@@ -123,15 +197,10 @@ class SmartContainer implements ContainerInterface, \ArrayAccess
      */
     public function offsetSet($offset, $value)
     {
-        if ($offset === 'definitions' || $offset === 'instances') {
-            throw new \Exception('Overwriting private properties is forbidden');
-        }
-
         if (is_callable($value)) {
-            $this->definitions[$offset] = $value;
+            $this->define($offset, $value);
         } else {
-            $this->definitions[$offset] = true;
-            $this->instances[$offset] = $value;
+            $this->bind($offset, $value);
         }
     }
 
@@ -146,92 +215,23 @@ class SmartContainer implements ContainerInterface, \ArrayAccess
 
     /**
      * @param string $id
-     * @throws \Exception
+     * @throws ClassNotFoundException
+     * @throws CannotRedefineException
      */
     private function tryAutoWire(string $id)
     {
         if (class_exists($id)) {
-            $this[$id] = function () use ($id) {
-                $dependencies = $this->getDependenciesFor($id);
+            $this->define($id, function () use ($id) {
+                try {
+                    $dependencies = $this->dependencyResolver->getDependenciesFor($id, $this);
 
-                return new $id(...$dependencies);
-            };
+                    return new $id(...$dependencies);
+                } catch (DependencyException $dependencyException) {
+                    throw new CannotResolveException($id, 0, $dependencyException);
+                }
+            });
         } else {
             throw new ClassNotFoundException($id, "cannot auto wire");
         }
-    }
-
-    /**
-     * @param string $id
-     * @return array
-     * @throws CannotResolveException
-     * @throws DefinitionNotFoundException
-     * @throws \ReflectionException
-     * @throws \Exception
-     */
-    private function getDependenciesFor(string $id) {
-        $reflection = new \ReflectionClass($id);
-
-        $constructor = $reflection->getConstructor();
-
-        if (!$constructor) {
-            return [];
-        }
-
-        $parameters = $constructor->getParameters();
-
-        $dependencies = [];
-
-        foreach ($parameters as $parameter) {
-
-            $dependency = null;
-
-            $type = $parameter->getType();
-            $argName = $parameter->getName();
-
-            if ($type instanceof \ReflectionNamedType) {
-                $typeName = $type->getName();
-                if ($type->isBuiltin()) {
-                    $dependency = $this->getPrimitiveDependency($id, $argName);
-
-                    $dependencyType = gettype($dependency);
-                    if ($dependencyType !== $typeName) {
-                        throw new \Exception("Invalid dependency type `$dependencyType` for `$id` in `$argName`. It should be `$typeName`.");
-                    }
-                } else {
-                    if ($this->has($typeName)) {
-                        $dependency = $this->get($typeName);
-                    }
-                }
-            } else {
-                $dependency = $this->getPrimitiveDependency($id, $argName);
-            }
-
-            if ($dependency === null && !$type->allowsNull()) {
-                throw new \Exception("Dependency `$argName` for `$id` not found.");
-            }
-
-            $dependencies[] = $dependency;
-        }
-
-        return $dependencies;
-    }
-
-    /**
-     * @param string $id
-     * @param string $name
-     * @return mixed|null
-     */
-    private function getPrimitiveDependency(string $id, string $name)
-    {
-        $dependency = null;
-        if (isset($this->primitives[$id][$name])) {
-            $dependency = $this->primitives[$id][$name];
-            if (is_callable($dependency)) {
-                $dependency = $dependency($this);
-            }
-        }
-
-        return $dependency;
     }
 }

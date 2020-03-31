@@ -4,14 +4,14 @@
 namespace BigBIT\SmartDI\Exceptions;
 
 
-use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Throwable;
 
 /**
  * Class CannotResolveException
  * @package BigBIT\SmartDI\Exceptions
  */
-class ClassNotFoundException extends \Exception implements ContainerExceptionInterface
+class ClassNotFoundException extends \Exception implements NotFoundExceptionInterface
 {
     /**
      * CannotResolveException constructor.
